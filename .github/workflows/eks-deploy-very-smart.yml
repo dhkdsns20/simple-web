@@ -43,6 +43,7 @@ jobs:
           repository: dhkdsns20/simple-web-platform
           ref: main
           path: .
+          username: dhkdsns20
           token: ${{ secrets.PAT }}
 
       # 이미지 태그 업데이트
@@ -63,5 +64,5 @@ jobs:
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git commit -am "Update image tag to ${{ env.DOCKER_TAG }}"
           git remote set-url origin https://${{ secrets.PAT }}@github.com/${{ secrets.DOCKER_USERNAME }}/simple-web-platform.git
-          
+
           git push origin main
