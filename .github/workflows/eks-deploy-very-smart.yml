@@ -19,7 +19,7 @@ jobs:
       DOCKER_TAG: ${{ github.run_number }}
 
     steps:
-      - name: 1.소스코드 다운로드
+      - name: 1.소스코드 다운로드 합니다
         uses: actions/checkout@v4
 
       - name: 7.Docker Image Build
