@@ -42,18 +42,19 @@ jobs:
         with:
           repository: dhkdsns20/simple-web-platform
           ref: main
-          path: .
+          path: service-repo
           username: dhkdsns20
           token: ${{ secrets.PAT }}
 
       # 이미지 태그 업데이트
       - name: 11.쿠버네티스 매니페스트 파일 이미지 태그 업데이트
         run: |
+          cd service-repo
           # 파일이 존재하는지 확인
           ls -la
           # 현재 파일 내용 확인
           cat simple-deploy.yaml
-          sed -i "s|image: ${{ secrets.DOCKER_USERNAME }}\/simple-web.*|image: ${{ secrets.DOCKER_USERNAME }}\/simple-web:${{ env.DOCKER_TAG }}|g" simple-deploy.yaml
+          sed -i "s|image: ${{ secrets.DOCKER_USERNAME }}\/simple-web.*|image: ${{ secrets.DOCKER_USERNAME }}\/simple-web:${{ env.DOCKER_TAG }}|g" simple-web-deploy.yml
           # 변경된 내용 확인
           cat simple-deploy.yaml
 
