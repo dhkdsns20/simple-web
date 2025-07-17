@@ -12,58 +12,53 @@ permissions:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     env:
       DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/simple-web
       DOCKER_TAG: ${{ github.run_number }}
 
     steps:
-      - name: 1.소스코드 다운로드 합니다
+      - name: 1. 소스코드 다운로드
         uses: actions/checkout@v4
 
-      - name: 7.Docker Image Build
-        run: docker build  -t ${{ secrets.DOCKER_USERNAME }}/simple-web:${{ env.DOCKER_TAG }} .
+      - name: 2. Docker 이미지 빌드
+        run: |
+          docker build -t ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }} .
 
-      - name: 8.Docker Login
-        uses: docker/login-action@v3.0.0
+      - name: 3. DockerHub 로그인
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
           logout: true
 
-      - name: 9.Docker Push
+      - name: 4. Docker 이미지 푸시
         run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/simple-web:${{ env.DOCKER_TAG }}
+          docker push ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }}
 
-      # 서비스 리포지토리 체크아웃
-      - name: 10.서비스 리포지토리 체크아웃
+      - name: 5. 서비스 리포지토리 체크아웃 (simple-web-platform)
         uses: actions/checkout@v4
         with:
           repository: dhkdsns20/simple-web-platform
           ref: main
           path: service-repo
-          username: dhkdsns20
           token: ${{ secrets.PAT }}
 
-      # 이미지 태그 업데이트
-      - name: 11.쿠버네티스 매니페스트 파일 이미지 태그 업데이트
+      - name: 6. 쿠버네티스 매니페스트 파일 이미지 태그 업데이트
         run: |
           cd service-repo
-          # 파일이 존재하는지 확인
-          ls -la
-          # 현재 파일 내용 확인
-          cat simple-deploy.yaml
-          sed -i "s|image: ${{ secrets.DOCKER_USERNAME }}\/simple-web.*|image: ${{ secrets.DOCKER_USERNAME }}\/simple-web:${{ env.DOCKER_TAG }}|g" simple-web-deploy.yml
-          # 변경된 내용 확인
-          cat simple-deploy.yaml
+          echo "🔍 변경 전 내용:"
+          cat simple-web-deploy.yml || echo "❌ 파일 없음"
+          sed -i "s|image: ${{ secrets.DOCKER_USERNAME }}/simple-web.*|image: ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }}|g" simple-web-deploy.yml
+          echo "✅ 변경 후 내용:"
+          cat simple-web-deploy.yml
 
-      # 변경사항 커밋 및 푸시
-      - name: 12.서비스 리포지토리 변경사항 커밋 및 푸시
+      - name: 7. 변경사항 커밋 및 푸시
         run: |
+          cd service-repo
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git commit -am "Update image tag to ${{ env.DOCKER_TAG }}"
-          git remote set-url origin https://${{ secrets.PAT }}@github.com/${{ secrets.DOCKER_USERNAME }}/simple-web-platform.git
-
+          git add simple-web-deploy.yml
+          git commit -m "Update image tag to ${{ env.DOCKER_TAG }}" || echo "No changes to commit"
+          git remote set-url origin https://${{ secrets.PAT }}@github.com/dhkdsns20/simple-web-platform.git
           git push origin main
